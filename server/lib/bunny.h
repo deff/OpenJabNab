@@ -93,7 +93,6 @@ private:
 	API_CALL(Api_RemovePlugin);
 	API_CALL(Api_GetListOfAssociatedPlugins);
 	API_CALL(Api_SetSingleClickPlugin);
-	API_CALL(Api_SetDoubleClickPlugin);
 	API_CALL(Api_GetClickPlugins);
 	API_CALL(Api_GetListOfKnownRFIDTags);
 	API_CALL(Api_SetRFIDTagName);
@@ -126,6 +125,8 @@ private:
 
 	PluginInterface * singleClickPlugin;
 	PluginInterface * doubleClickPlugin;
+	PluginInterface * tripleClickPlugin;
+	PluginInterface * quatroClickPlugin;
 
 
 	// RFID Tags

@@ -16,7 +16,7 @@ PluginDice::PluginDice():PluginInterface("dice", "Dice roll",BunnyZtampPlugin)
 
 bool PluginDice::OnClick(Bunny * b, PluginInterface::ClickType type)
 {
-	if (type == PluginInterface::SingleClick)
+	if (type)
 	{
 		// Language
 		QByteArray Language = b->GetPluginSetting("dice", "PluginConfiguration/Language", "fr").toByteArray();

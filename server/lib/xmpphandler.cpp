@@ -71,7 +71,7 @@ void XmppHandler::HandleBunnyXmppMessage()
 	// No bunny yet
 	if(!bunny)
 	{
-		LogError(QString("Unable to handle xmpp message : %1").arg(QString(data)));
+		LogError(QString("Unable to handle xmpp message bec of no bunny : %1").arg(QString(data)));
 		return;
 	}
 
@@ -87,16 +87,22 @@ void XmppHandler::HandleBunnyXmppMessage()
 		QString message = rx.cap(1);
 		if (message.startsWith("<button"))
 		{
+		//LogWarning(QString("entering mess : %1").arg(QString(data)));
 			// Single Click : <button xmlns="violet:nabaztag:button"><clic>1</clic></button>
 			// Double Click : <button xmlns="violet:nabaztag:button"><clic>2</clic></button>
 			QRegExp rx("<clic>([0-9]+)</clic>");
 			if (rx.indexIn(message) != -1)
 			{
+				//LogWarning(QString("entering button : %1").arg(QString(data)));
 				int value = rx.cap(1).toInt();
 				if (value == 1)
 					handled = bunny->OnClick(PluginInterface::SingleClick);
 				else if (value == 2)
 					handled = bunny->OnClick(PluginInterface::DoubleClick);
+				else if (value == 3)
+					handled = bunny->OnClick(PluginInterface::TripleClick);
+				else if (value == 4)
+					handled = bunny->OnClick(PluginInterface::QuatroClick);
 				else
 					LogWarning(QString("Unable to parse button/click message : %1").arg(QString(data)));
 			}

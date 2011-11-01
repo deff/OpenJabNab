@@ -53,7 +53,7 @@ bool PluginWeather::OnRFID(Bunny * b, QByteArray const& tag)
 
 bool PluginWeather::OnClick(Bunny * b, PluginInterface::ClickType type)
 {
-	if (type == PluginInterface::SingleClick) {
+	if (type) {
 		QString city = b->GetPluginSetting(GetName(), "Default/City", "").toString();
 		if(city != "") {
 			getWeatherPage(b, city);

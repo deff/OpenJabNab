@@ -42,7 +42,7 @@ void PluginEphemeride::OnCron(Bunny * b, QVariant)
 
 bool PluginEphemeride::OnClick(Bunny * b, PluginInterface::ClickType type)
 {
-	if (type == PluginInterface::SingleClick)
+	if (type)
 	{
 		getEphemeridePage(b);
 		return true;

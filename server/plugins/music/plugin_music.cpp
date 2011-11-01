@@ -64,7 +64,7 @@ bool PluginMusic::OnRFID(Bunny * b, QByteArray const& tag)
 
 bool PluginMusic::OnClick(Bunny * b, PluginInterface::ClickType type)
 {
-	if (type == PluginInterface::SingleClick)
+	if (type)
 	{
 		getMusicList(b);
 		return true;

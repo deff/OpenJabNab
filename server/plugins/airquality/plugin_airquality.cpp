@@ -65,7 +65,7 @@ bool PluginAirquality::OnRFID(Bunny * b, QByteArray const& tag)
 
 bool PluginAirquality::OnClick(Bunny * b, PluginInterface::ClickType type)
 {
-	if (type == PluginInterface::SingleClick) {
+	if (type) {
 		QString city = b->GetPluginSetting(GetName(), "Default/City", "").toString();
 		if(city != "") {
 			getAirPage(b, city);

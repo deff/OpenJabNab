@@ -43,6 +43,12 @@ proto buttoncheckevent 0;;
 
 //
 // Etats generaux
+var buttonlast;;
+var buttontime;;
+var buttonevent;;
+var buttonclicn;;
+var iptowake = "\0\0\0\0"  ;; // init de l'ip a wake up
+var mactowake = "000000000000" ;;// init de la mac a reveiller
 var gItState = 0;;			// interactif
 var gSleepState = 1;;		// sleeping
 var gStreamingState = 0;;	// streaming
@@ -4306,6 +4312,66 @@ fun runEvalOneCommand i0=
 		set run=streamCmdRun i0;
 		0
 	)
+	else if !strcmp key "IW" then
+	(
+		Secholn "exec IW : record ip"; 
+		//IPecho netdns 0 1;
+		//startdnsclient;  
+		set iptowake =(useparamip val);
+		setleds 0;
+		set gCurStreamName=nil;
+		set chorst_pasdedanse=nil;
+		set run=streamCmdRun i0;
+		0
+	)
+	else if !strcmp key "IM" then
+	(
+		Secholn "exec IM : record MAC"; 
+		//IPecho netdns 0 1;
+		//startdnsclient;  
+		set  mactowake= val;
+		setleds 0;
+		set gCurStreamName= nil;
+		set chorst_pasdedanse=nil;
+		set run=streamCmdRun i0;
+		0
+	)
+	else if !strcmp key "DF" then
+	(
+		Secholn "exec WW : Start streaming"; 
+		//IPecho netdns 0 1;
+		//startdnsclient;  
+		udpsend netip 7 iptowake 7 (mactowakechain mactowake 16) macbroadcast;
+		setleds 0;
+		set gCurStreamName= nil;
+		set chorst_pasdedanse=nil;
+		set run=streamCmdRun i0;
+		0
+	)
+	else if !strcmp key "DG" then
+	(
+		Secholn "exec WW : Start streaming"; 
+		//IPecho netdns 0 1;
+		//startdnsclient;  
+		udpsend netip 7 iptowake 7 iptowake macbroadcast;
+		setleds 0;
+		set gCurStreamName= nil;
+		set chorst_pasdedanse=nil;
+		set run=streamCmdRun i0;
+		0
+	)
+	else if !strcmp key "WW" then
+	(
+		Secholn "exec WW : Start streaming"; 
+		//IPecho netdns 0 1;
+		//startdnsclient;  
+		udpsend netip 7 iptowake 7 strcatlist "\$ff\$ff\$ff\$ff\$ff\$ff"::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::(mactokey mactowake)::nil macbroadcast;
+		setleds 0;
+		set gCurStreamName= nil;
+		set chorst_pasdedanse=nil;
+		set run=streamCmdRun i0;
+		0
+	)
 	else if !strcmp key "SP" then
 	(
 		Secholn "exec SP : Start streaming (protected)";
@@ -4380,6 +4446,11 @@ fun runEvalOneCommand i0=
 		Secho "exec IS : "; Secholn val;
 		// Start Interactive mode
 		interactiveStart val;
+		0
+	)
+	else if !strcmp key "RB" then
+	(
+		reboot 0x0407FE58 0x13fb6754;
 		0
 	)
 	else if !strcmp key "IE" then
@@ -4856,8 +4927,7 @@ fun controlwait=
 		Secho "controlwait ev="; Iecholn ev; 
 		wavstop;
 		earStop 0;
-		if ev==BUTTON_CLIC then ( XmppSessionSendButtonMsg ev 0 nil) // debug
-		else if ev==BUTTON_DCLIC then (controlsound midi_ack;XmppSessionSendButtonMsg ev 0 nil) //ackall
+		if ev==BUTTON_DCLIC then (controlsound midi_ack;XmppSessionSendButtonMsg ev 0 nil) //ackall
 		else if ev==BUTTON_LCLIC then _controlrecord 0	//  //back ou record
 		else if ev==BUTTON_DLCLIC then _controlrecord 1	// //back ou record
 		else if ev&0x8000 then (
@@ -4871,7 +4941,8 @@ fun controlwait=
 				XmppSessionSendEarMsg leftpos rightPos
 			);
 			0
-		) 
+		)
+		else  ( XmppSessionSendButtonMsg ev 0 nil) // debug
 	);
 	controlrfid
 	;;

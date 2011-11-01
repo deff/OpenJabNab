@@ -25,7 +25,7 @@ class PluginInterface : public QObject, public PluginApiHandler
 {
 	friend class PluginManager;
 public:
-	enum ClickType { SingleClick = 0, DoubleClick};
+	enum ClickType { SingleClick, DoubleClick, TripleClick, QuatroClick};
 	enum PluginType { RequiredPlugin, SystemPlugin, BunnyPlugin, ZtampPlugin, BunnyZtampPlugin};
 
 	PluginInterface(QString name, QString visualName = QString(), PluginType type = BunnyPlugin);

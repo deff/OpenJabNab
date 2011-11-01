@@ -41,7 +41,7 @@ void PluginRatp::OnInitPacket(const Bunny *, AmbientPacket &, SleepPacket &)
 
 bool PluginRatp::OnClick(Bunny * b, PluginInterface::ClickType type)
 {
-	if (type == PluginInterface::SingleClick) {
+	if (type) {
 		
 		QString str = b->GetPluginSetting(GetName(), "Default/Arret", "").toString();
 		QString ligne;

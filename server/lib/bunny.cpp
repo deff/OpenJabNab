@@ -20,6 +20,8 @@
 
 #define SINGLE_CLICK_PLUGIN_SETTINGNAME "singleClickPlugin"
 #define DOUBLE_CLICK_PLUGIN_SETTINGNAME "doubleClickPlugin"
+#define TRIPLE_CLICK_PLUGIN_SETTINGNAME "tripleClickPlugin"
+#define QUATRO_CLICK_PLUGIN_SETTINGNAME "quatroClickPlugin"
 
 Bunny::Bunny(QByteArray const& bunnyID)
 {
@@ -304,6 +306,40 @@ void Bunny::LoadConfig()
 	{
 		doubleClickPlugin = NULL;
 	}
+	if(GlobalSettings.contains(TRIPLE_CLICK_PLUGIN_SETTINGNAME))
+	{
+		QString pluginName = GlobalSettings.value(TRIPLE_CLICK_PLUGIN_SETTINGNAME).toString();
+		PluginInterface * plugin = PluginManager::Instance().GetPluginByName(pluginName);
+		QString error = CheckPlugin(plugin, true);
+		if(error.isNull())
+			tripleClickPlugin = plugin;
+		else
+		{
+			tripleClickPlugin = NULL;
+			LogError(error.arg(pluginName));
+		}
+	}
+	else
+	{
+		tripleClickPlugin = NULL;
+	}
+	if(GlobalSettings.contains(QUATRO_CLICK_PLUGIN_SETTINGNAME))
+	{
+		QString pluginName = GlobalSettings.value(QUATRO_CLICK_PLUGIN_SETTINGNAME).toString();
+		PluginInterface * plugin = PluginManager::Instance().GetPluginByName(pluginName);
+		QString error = CheckPlugin(plugin, true);
+		if(error.isNull())
+			quatroClickPlugin = plugin;
+		else
+		{
+			quatroClickPlugin = NULL;
+			LogError(error.arg(pluginName));
+		}
+	}
+	else
+	{
+		quatroClickPlugin = NULL;
+	}
 
 	// Added to config file, listOfRFIDTags
 	if(!in.atEnd())
@@ -494,6 +530,45 @@ void Bunny::AddPlugin(PluginInterface * p)
 	{
 		doubleClickPlugin = NULL;
 	}
+	if(GlobalSettings.contains(TRIPLE_CLICK_PLUGIN_SETTINGNAME))
+	{
+		QString pluginName = GlobalSettings.value(TRIPLE_CLICK_PLUGIN_SETTINGNAME).toString();
+		if(p->GetName() == pluginName)
+		{
+			QString error = CheckPlugin(p, true);
+			if(error.isNull())
+				tripleClickPlugin = p;
+			else
+			{
+				tripleClickPlugin = NULL;
+				LogError(error.arg(pluginName));
+			}
+		}
+	}
+	else
+	{
+		tripleClickPlugin = NULL;
+	}
+	if(GlobalSettings.contains(QUATRO_CLICK_PLUGIN_SETTINGNAME))
+	{
+		QString pluginName = GlobalSettings.value(QUATRO_CLICK_PLUGIN_SETTINGNAME).toString();
+		if(p->GetName() == pluginName)
+		{
+			QString error = CheckPlugin(p, true);
+			if(error.isNull())
+				quatroClickPlugin = p;
+			else
+			{
+				quatroClickPlugin = NULL;
+				LogError(error.arg(pluginName));
+			}
+		}
+	}
+	else
+	{
+		quatroClickPlugin = NULL;
+	}
+	
 }
 
 // API Remove plugin to this bunny
@@ -508,6 +583,14 @@ void Bunny::RemovePlugin(PluginInterface * p)
 		if(p == doubleClickPlugin)
 		{
 			doubleClickPlugin = NULL;
+		}
+		if(p == tripleClickPlugin)
+		{
+			tripleClickPlugin = NULL;
+		}
+		if(p == quatroClickPlugin)
+		{
+			quatroClickPlugin = NULL;
 		}
 		listOfPlugins.removeAll(p->GetName());
 		listOfPluginsPtr.removeAll(p);
@@ -609,6 +692,14 @@ bool Bunny::OnClick(PluginInterface::ClickType type)
 	{
 		return doubleClickPlugin->OnClick(this, type);
 	}
+	if(type == PluginInterface::TripleClick && tripleClickPlugin)
+	{
+		return tripleClickPlugin->OnClick(this, type);
+	}
+	if(type == PluginInterface::QuatroClick && quatroClickPlugin)
+	{
+		return quatroClickPlugin->OnClick(this, type);
+	}
 	return false;
 }
 
@@ -661,8 +752,7 @@ void Bunny::InitApiCalls()
 	DECLARE_API_CALL("unregisterPlugin(name)", &Bunny::Api_RemovePlugin);
 	DECLARE_API_CALL("getListOfActivePlugins()", &Bunny::Api_GetListOfAssociatedPlugins);
 
-	DECLARE_API_CALL("setSingleClickPlugin(name)", &Bunny::Api_SetSingleClickPlugin);
-	DECLARE_API_CALL("setDoubleClickPlugin(name)", &Bunny::Api_SetDoubleClickPlugin);
+	DECLARE_API_CALL("setSingleClickPlugin(name,tmpdata)", &Bunny::Api_SetSingleClickPlugin);
 	DECLARE_API_CALL("getClickPlugins()", &Bunny::Api_GetClickPlugins);
 
 	DECLARE_API_CALL("getListOfKnownRFIDTags()", &Bunny::Api_GetListOfKnownRFIDTags);
@@ -732,46 +822,81 @@ API_CALL(Bunny::Api_GetListOfAssociatedPlugins)
 API_CALL(Bunny::Api_SetSingleClickPlugin)
 {
 	Q_UNUSED(account);
+	QString tmpdata = hRequest.GetArg("tmpdata");
+	if (tmpdata.toInt() == 1){
+		if(hRequest.GetArg("name") == "none")
+		{
+			RemoveGlobalSetting(SINGLE_CLICK_PLUGIN_SETTINGNAME);
+			singleClickPlugin = NULL;
+			return new ApiManager::ApiOk(QString("Removed preferred single click plugin"));
+		}
 
-	if(hRequest.GetArg("name") == "none")
-	{
-		RemoveGlobalSetting(SINGLE_CLICK_PLUGIN_SETTINGNAME);
-		singleClickPlugin = NULL;
-		return new ApiManager::ApiOk(QString("Removed preferred single click plugin"));
-	}
+		PluginInterface * plugin = PluginManager::Instance().GetPluginByName(hRequest.GetArg("name"));
 
-	PluginInterface * plugin = PluginManager::Instance().GetPluginByName(hRequest.GetArg("name"));
+		QString error = CheckPlugin(plugin, true);
+		if(!error.isNull())
+			return new ApiManager::ApiError(error.arg(hRequest.GetArg("name")));
 
-	QString error = CheckPlugin(plugin, true);
-	if(!error.isNull())
-		return new ApiManager::ApiError(error.arg(hRequest.GetArg("name")));
-
-	singleClickPlugin = plugin;
-	SetGlobalSetting(SINGLE_CLICK_PLUGIN_SETTINGNAME, plugin->GetName());
-	return new ApiManager::ApiOk(QString("Set '%1' as single click plugin").arg(plugin->GetVisualName()));
-}
-
-API_CALL(Bunny::Api_SetDoubleClickPlugin)
-{
-	Q_UNUSED(account);
-
-	if(hRequest.GetArg("name") == "none")
-	{
+		singleClickPlugin = plugin;
+		SetGlobalSetting(SINGLE_CLICK_PLUGIN_SETTINGNAME, plugin->GetName());
+		return new ApiManager::ApiOk(QString("Set '%1' as single click plugin").arg(plugin->GetVisualName()));
+		}
+	else if (tmpdata.toInt() == 2){
+			if(hRequest.GetArg("name") == "none")
+		{
 		RemoveGlobalSetting(DOUBLE_CLICK_PLUGIN_SETTINGNAME);
 		doubleClickPlugin = NULL;
 		return new ApiManager::ApiOk(QString("Removed preferred double click plugin"));
+		}
+
+		PluginInterface * plugin = PluginManager::Instance().GetPluginByName(hRequest.GetArg("name"));
+
+		QString error = CheckPlugin(plugin, true);
+		if(!error.isNull())
+			return new ApiManager::ApiError(error.arg(hRequest.GetArg("name")));
+
+		doubleClickPlugin = plugin;
+		SetGlobalSetting(DOUBLE_CLICK_PLUGIN_SETTINGNAME, plugin->GetName());
+		return new ApiManager::ApiOk(QString("Set '%1' as double click plugin").arg(plugin->GetVisualName()));
+		}
+	else if (tmpdata.toInt() == 3){
+			if(hRequest.GetArg("name") == "none")
+		{
+		RemoveGlobalSetting(TRIPLE_CLICK_PLUGIN_SETTINGNAME);
+		tripleClickPlugin = NULL;
+		return new ApiManager::ApiOk(QString("Removed preferred triple click plugin"));
+		}
+
+		PluginInterface * plugin = PluginManager::Instance().GetPluginByName(hRequest.GetArg("name"));
+
+		QString error = CheckPlugin(plugin, true);
+		if(!error.isNull())
+			return new ApiManager::ApiError(error.arg(hRequest.GetArg("name")));
+
+		tripleClickPlugin = plugin;
+		SetGlobalSetting(TRIPLE_CLICK_PLUGIN_SETTINGNAME, plugin->GetName());
+		return new ApiManager::ApiOk(QString("Set '%1' as triple click plugin").arg(plugin->GetVisualName()));
+		}
+	else if (tmpdata.toInt() == 4){
+			if(hRequest.GetArg("name") == "none")
+		{
+		RemoveGlobalSetting(QUATRO_CLICK_PLUGIN_SETTINGNAME);
+		quatroClickPlugin = NULL;
+		return new ApiManager::ApiOk(QString("Removed preferred quatro click plugin"));
+		}
+
+		PluginInterface * plugin = PluginManager::Instance().GetPluginByName(hRequest.GetArg("name"));
+
+		QString error = CheckPlugin(plugin, true);
+		if(!error.isNull())
+			return new ApiManager::ApiError(error.arg(hRequest.GetArg("name")));
+
+		quatroClickPlugin = plugin;
+		SetGlobalSetting(QUATRO_CLICK_PLUGIN_SETTINGNAME, plugin->GetName());
+		return new ApiManager::ApiOk(QString("Set '%1' as quatro click plugin").arg(plugin->GetVisualName()));
 	}
-
-	PluginInterface * plugin = PluginManager::Instance().GetPluginByName(hRequest.GetArg("name"));
-
-	QString error = CheckPlugin(plugin, true);
-	if(!error.isNull())
-		return new ApiManager::ApiError(error.arg(hRequest.GetArg("name")));
-
-	doubleClickPlugin = plugin;
-	SetGlobalSetting(DOUBLE_CLICK_PLUGIN_SETTINGNAME, plugin->GetName());
-	return new ApiManager::ApiOk(QString("Set '%1' as double click plugin").arg(plugin->GetVisualName()));
-}
+	return 0;
+}	
 
 API_CALL(Bunny::Api_GetClickPlugins)
 {
@@ -781,6 +906,8 @@ API_CALL(Bunny::Api_GetClickPlugins)
 	QList<QString> list;
 	list.append(GetGlobalSetting(SINGLE_CLICK_PLUGIN_SETTINGNAME, QString()).toString());
 	list.append(GetGlobalSetting(DOUBLE_CLICK_PLUGIN_SETTINGNAME, QString()).toString());
+	list.append(GetGlobalSetting(TRIPLE_CLICK_PLUGIN_SETTINGNAME, QString()).toString());
+	list.append(GetGlobalSetting(QUATRO_CLICK_PLUGIN_SETTINGNAME, QString()).toString());
 
 	return new ApiManager::ApiList(list);
 }
